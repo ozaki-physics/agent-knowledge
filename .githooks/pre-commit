@@ -1,0 +1,29 @@
+#!/bin/sh
+
+# このフックを有効にするには 以下のコマンドを実行して Git にフックのパスを設定してください
+# git config core.hooksPath .githooks
+
+# 現在のブランチを取得
+# 2>/dev/null で エラーメッセージ を捨てる
+branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+if [ "$branch" = "HEAD" ] || [ -z "$branch" ]; then
+  branch=$(git describe --contains --all --tags --always HEAD 2>/dev/null)
+fi
+
+# commit 禁止 branch (POSIX sh 互換: 配列ではなく空白区切りの文字列を使用)
+# readonly REJECT_COMMIT_BRANCHES="master main develop"
+# 本当は develop も ダメにしたいけど ozaki が 特権的に 使うために 一時的に 許可する
+readonly REJECT_COMMIT_BRANCHES="master main"
+
+
+# commit 禁止ブランチをループ
+for reject_commit_branch in $REJECT_COMMIT_BRANCHES; do
+    # commit 禁止ブランチと一致するか
+    # "${branch#refs/heads/}" で refs/heads/ を除去 (POSIX 準拠)
+    if [ "${branch#refs/heads/}" = "$reject_commit_branch" ]; then
+        # commit 駄目だよメッセージを出力
+        echo "[commit-error] ${reject_commit_branch} ブランチへの commit は禁止です"
+        # 0 以外を返すと commit が中断されるので 1 を返却
+        exit 1
+    fi
+done
