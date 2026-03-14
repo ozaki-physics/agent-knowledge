@@ -1,7 +1,7 @@
 # Architecture Decision Record (略称 ADR) の目次
 
 ## 運用
-- ADR は `docs/ard/` 配下で管理する
+- ADR は `docs/adr/` 配下で管理する
 - 1件につき 1ファイルで記録
 - ファイル名は `NNNN-<short-title>.md` とする
 - `NNNN` は 4桁連番とし 番号を飛ばすこと, 欠番の再利用 はしない
@@ -9,7 +9,7 @@
 - 過去の ADR は削除せず 必要時は ステータスを `置き換え済み` にする
 
 ## 書き方
-- 新規作成時は `docs/ard/0000-template.md` をコピーして使う
+- 新規作成時は `docs/adr/0000-template.md` をコピーして使う
 - 見出しは テンプレートと同じ順番で書く
 - `ステータス` は `Draft / 提案中 / Review / Accepted / Rejected / 置き換え済み` から選ぶ
 - `背景` は 判断が必要になった 理由, 前提, 制約 を書く
@@ -28,7 +28,7 @@
 案自体を 却下した -> Rejected (却下, 差し戻し)
 
 ## design-docs との違い
-- ADR (`docs/ard`) は "なぜ その方針を採用したか" という意思決定の記録を残す
+- ADR (`docs/adr`) は "なぜ その方針を採用したか" という意思決定の記録を残す
 - design-docs (`docs/design-docs`) は "どう実装するか" という設計内容を整理する
 - ADR は 結論と理由を短く固定化し あとから判断経緯を追えるようにする
 - design-docs は 画面, API, DB, 処理フロー など 詳細設計を扱う
