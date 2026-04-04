@@ -20,6 +20,7 @@
 - 方針決定が必要なテーマは ADR を先に作成して 実装詳細を design-docs に落とし込む
 
 ## 目次
-- [index](./coding-think-mind.md): コーディング思想
-- [deployment-guide](./deployment-guide.md): deploy手順 (開発(development) / 検証(staging) / 本番(production), Docker コンテナ)
-- [error-design](./error-design.md): エラー設計
+- 例: `0001-<short-title>.md`: 新しい ADR を追加したら実ファイルへのリンクをここに追記する
+- 例: [0001-coding-think-mind](./0001-coding-think-mind.md): コーディング思想
+- 例: deployment-guide: deploy手順 (開発(development) / 検証(staging) / 本番(production), Docker コンテナ)
+- 例: error-design: エラー設計
