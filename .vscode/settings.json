@@ -1,0 +1,18 @@
+{
+  // ファイルの標準エンコードをUTF-8に設定する
+  "files.encoding": "utf8",
+  // ファイルの標準改行コードをLFに設定する
+  "files.eol": "\n",
+  // 空文字を可視化
+  "editor.renderWhitespace": "all",
+  // ファイル保存時に ファイル最終行 に 改行 を 挿入
+  "files.insertFinalNewline": true,
+  // ファイル保存時に ファイル最終行 の 余計な改行 を 削除
+  "files.trimFinalNewlines": true,
+  // ファイルエクスプローラーで特定のファイルやフォルダを非表示にする
+  "files.exclude": {
+    // "**/.DS_Store": true,
+    // "**/node_modules": true,
+    // "**/*.log": true
+  }
+}

@@ -1,0 +1,46 @@
+#!/bin/sh
+
+# このフックを有効にするには 以下のコマンドを実行して Git にフックのパスを設定してください
+# git config core.hooksPath .githooks
+
+# コミットメッセージファイルのパス（Gitが渡してくれる）
+MSG_FILE=$1
+# コミットメッセージの1行目を取得
+MSG=$(head -n1 "$MSG_FILE")
+
+# コミットメッセージ全体が欲しいときは以下のようにする
+# COMMIT_MESSAGE="$(cat "$1")"
+
+## 必要なPrefixを定義 (POSIX sh: 配列ではなく空白区切り文字列)
+readonly CORRECT_PREFIXES="feat fix docs refactor test chore"
+
+err=0
+
+for prefix in $CORRECT_PREFIXES; do
+  # コミットメッセージの1行目にPrefixが含まれているかチェック
+  case "$MSG" in
+  # `)` は パターンの終端 を示す
+  # `prefix:` または `prefix: ` の両方を受け付けるためスペースを必須にしない
+  "$prefix:"*)
+      # プレフィックスの直後の説明を抽出し、前後の空白を除去してチェックする
+      description=$(printf '%s' "$MSG" | sed "s/^$prefix: *//")
+      trimmed=$(printf '%s' "$description" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+      if [ -n "$trimmed" ]; then
+        err=1
+        break
+      else
+        echo "コミットメッセージの説明部分が空です: \"$prefix: \" の後に説明を追加してください"
+        exit 1
+      fi
+      ;;
+  esac
+done
+
+if [ "$err" -eq 1 ]; then
+  exit 0
+else
+  echo "コミットメッセージは正しい プレフィックス で始まっていません"
+  echo "  許可されているプレフィックス: $CORRECT_PREFIXES"
+  echo "  例: feat: ユーザー登録追加"
+  exit 1
+fi
