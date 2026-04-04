@@ -19,11 +19,12 @@ https://github.blog/changelog/label/copilot/
 ### ディレクトリのコピー
 `cp -r <コピー元> <コピー先>`
 ### Linux の シンボリックリンク の作り方
-`ln -s 元のパス 作りたい名前`
+`ln -s <元のパス> <作りたい名前>`
 `ln -s "/mnt/c/Users/Owner/My Documents/github_repository" ~/win-github_repository`
 
 `pwd -P` で シンボリックリンク の 元の物理的な場所を確認できる
 ### Windows の シンボリックリンク の作り方
+`New-Item -ItemType SymbolicLink -Path <作りたい名前> -Target <元のパス>`
 `New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.codex\skills\hello" -Target "$env:USERPROFILE\source\repos\temp\hello"`
 
 ### codex の skill を 一元管理 できるようになった!
@@ -68,8 +69,65 @@ locale
 `touch ~/.hushlogin`
 ### Git の 設定
 ```bash
-git config --global user.name "アカウント名"
-git config --global user.email "メアド"
+git config --global user.name "<アカウント名>"
+git config --global user.email "<メアド>"
 git config --list | grep user
-ssh-keygen -t ed25519 -a 100 -C "メアド"
+ssh-keygen -t ed25519 -a 100 -C "<メアド>"
+```
+### Git 操作
+リモートの変更を確認: `git fetch`
+#### Git Worktree
+##### パターン1: 新規ブランチで worktree を作る
+```bash
+# 新しいブランチとworktreeを同時に作成
+git worktree add -b <新しいブランチ名> <作成先のパス>
+git worktree add -b feature/new-ui ../my-project-new-ui
+
+# これで以下が同時に行われる:
+# 1. feature/new-uiブランチが作成される
+# 2. ../my-project-new-uiフォルダが作成される
+# 3. そのフォルダでfeature/new-uiがチェックアウトされる
+```
+
+##### パターン2: 既存ブランチで worktree を作る
+```bash
+# 既存のブランチで worktree を作成
+git worktree add <作成先のパス> <ブランチ名>
+git worktree add ../my-project-hotfix hotfix/bug-123
+
+# hotfix/bug-123ブランチが既に存在する必要がある
+```
+
+##### Worktree の 削除
+```bash
+# ワークツリーの確認
+git worktree list
+
+# worktree を削除
+git worktree remove <作成先のパス>
+git worktree remove ../my-project-new-ui
+
+# フォルダを直接削除した場合は 参照を整理
+# フォルダを直接削除した場合
+rm -rf <作成先のパス>
+rm -rf ../my-project-new-ui
+# Git に 削除された worktree の情報を整理させる
+git worktree prune
+```
+### ドキュメント を書くときの コマンド の規約
+説明用: `<placeholder>`
+省略可能: `[optional]`
+分岐: `{a|b}`
+複数: `...`
+実行例: 実値を書く(プレースホルダは使わない)
+例: `command <required> [optional] {choice1|choice2} <arg>...`
+
+試しに `git --help` を行ったとき
+```
+$ git --help
+usage: git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]
+           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
+           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--bare]
+           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
+           [--config-env=<name>=<envvar>] <command> [<args>]
 ```
