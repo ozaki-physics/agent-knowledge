@@ -36,5 +36,6 @@
 
 ## 目次
 - [0000-template](./0000-template.md): ADR テンプレート
-- 例: `0001-<short-title>.md`: 新しい ADR を追加したら実ファイルへのリンクをここに追記する
-- [0001-xxx](./0001-xxx.md): 命名規約に関する検討
+- 例: `NNNN-<short-title>.md`: 新しい ADR を追加したら実ファイルへのリンクをここに追記する
+- [0001-folder-name-case](./0001-folder-name-case.md): フォルダ名の単語区切りは kebab-case を原則とする
+- [0002-agent-customization-master-directory](./0002-agent-customization-master-directory.md): Agent Customization の大本ディレクトリを `.agents` にする
