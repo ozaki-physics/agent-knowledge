@@ -1,0 +1,4 @@
+interface:
+  display_name: ".agents 資産リンク"
+  short_description: ".agents 資産を対象ディレクトリへリンクする"
+  default_prompt: "$link-agents-assets を使って .agents 配下の資産をツール固有ディレクトリまたはホームディレクトリへリンクしてください。"
