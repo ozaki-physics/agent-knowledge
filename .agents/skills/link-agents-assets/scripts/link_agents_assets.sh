@@ -42,6 +42,9 @@ usage() {
   # GitHub Copilot 用の instructions を明示的に配置
   link_agents_assets.sh --profile github --target /path/to/project --type instructions
 
+  # Claude と GitHub Copilot 用の prompts をリポジトリ内へ配置
+  link_agents_assets.sh --profile repo --type prompts
+
   # 特定の skill だけ配置予定を確認
   link_agents_assets.sh --profile codex --target ~ --type skills --name link-agents-assets --dry-run
 
@@ -259,6 +262,10 @@ emit_destinations() {
     repo:subagents)
       printf '%s\n' "$target/.claude/agents/$file_name"
       ;;
+    repo:prompts)
+      printf '%s\n' "$target/.claude/commands/$name.md"
+      printf '%s\n' "$target/.github/prompts/$name.prompt.md"
+      ;;
     repo:instructions)
       if [[ "$file_name" == "AGENTS.md" ]]; then
         printf '%s\n' "$target/AGENTS.md"
@@ -272,6 +279,9 @@ emit_destinations() {
       ;;
     claude:subagents)
       printf '%s\n' "$target/agents/$file_name"
+      ;;
+    claude:prompts)
+      printf '%s\n' "$target/commands/$name.md"
       ;;
     claude:instructions)
       if [[ "$file_name" == "AGENTS.md" || "$file_name" == "CLAUDE.md" ]]; then
@@ -287,6 +297,9 @@ emit_destinations() {
       ;;
     github:subagents)
       printf '%s\n' "$target/agents/$file_name"
+      ;;
+    github:prompts)
+      printf '%s\n' "$target/prompts/$name.prompt.md"
       ;;
     github:instructions)
       # --type instructions を明示した場合だけ copilot-instructions.md を配置する

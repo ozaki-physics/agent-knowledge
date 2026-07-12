@@ -56,6 +56,7 @@ AI エージェント向けの再利用資産の大本ディレクトリは `.ag
   instructions/
     AGENTS.md
   prompts/
+    <prompt-name>.md
 ```
 
 ツール固有ディレクトリへの対応は 次の方針にする。
@@ -71,6 +72,8 @@ AI エージェント向けの再利用資産の大本ディレクトリは `.ag
 | .github/agents/<agent-name>.agent.md | .agents/subagents/github/<agent-name>.agent.md | GitHub Copilot 固有の派生ファイルを使う |
 | .claude/agents/<agent-name>.md | .agents/subagents/<agent-name>.md | 共通定義をファイル単位でリンクする |
 | .claude/agents/<agent-name>.md | .agents/subagents/claude/<agent-name>.md | Claude 固有定義をファイル単位でリンクする |
+| .claude/commands/<prompt-name>.md | .agents/prompts/<prompt-name>.md | Claude 用の拡張子へ名称変換してリンクする |
+| .github/prompts/<prompt-name>.prompt.md | .agents/prompts/<prompt-name>.md | GitHub Copilot 用の拡張子へ名称変換してリンクする |
 
 ### AGENTS.md
 `AGENTS.md` は リポジトリルートに置く必要があるツール向けの入口として扱う。
@@ -108,11 +111,18 @@ Claude Code を使わないなら `.github/agents` でも良いが あえて `.c
 (`.github/agents/*.agent.md` を作る前提)
 その場合は `.agents/subagents/` の共通定義を無理に流用せず `.agents/subagents/github/` に派生ファイルを作り `.github/agents/` へ ファイル単位でリンクする。
 
+### Prompts
+prompts は `.agents/prompts/<prompt-name>.md` を複数ツールで共有する大本として管理する。
+Claude で利用するときは `.claude/commands/<prompt-name>.md` へフ ァイル単位でリンクする。
+GitHub Copilot で利用するときは `.github/prompts/<prompt-name>.prompt.md` へ ファイル単位でリンクする。
+各ツールで拡張子が異なるため リンク先のファイル名だけを変換し 内容は複製しない。
+リポジトリ内へ共通 prompt を配置するときは Claude と GitHub Copilot の両方の入口へリンクする。
+
 ## 記録
 - 作成日: 2026-07-04
 - 更新日: 2026-07-12
 - 置き換え先 ADR: なし
-- 更新理由: Codex が リポジトリの `.agents/skills/` を標準で探索する仕様が確認できたため skills のツール固有リンク方針を見直し, subagents をファイル単位でリンクする方針を明確化
+- 更新理由: Codex が リポジトリの `.agents/skills/` を標準で探索する仕様が確認できたため skills のツール固有リンク方針を見直し, subagents と prompts をファイル単位でリンクする方針を明確化
 
 ## 検討した選択肢
 1. `.agents/` を大本にする
@@ -152,6 +162,7 @@ Codex が `.agents/skills/` を公式に探索するが `.agents/` 全体を Cod
 - `AGENTS.md` の実体も `.agents/instructions/` に置けるため エージェント向け指示を `.agents/` に集約できる
 - 共通 subagents を `.agents/subagents/` 直下に集約しつつ ツール固有定義をサブディレクトリで分離できる
 - subagents をファイル単位でリンクするため `.claude/agents/` に 各ツール共通で使えるサブエージェント と ツール固有のサブエージェント を共存できる
+- prompts の実体を `.agents/prompts/` に集約し Claude と GitHub Copilot で共有できる
 
 ## デメリット: 受け入れるリスク
 - `.agents/subagents/` は VS Code が標準で直接見る場所ではないため `.claude/agents/` へ ファイル単位のシンボリックリンクが必要になる
@@ -160,6 +171,7 @@ Codex が `.agents/skills/` を公式に探索するが `.agents/` 全体を Cod
 - Windows では シンボリックリンク作成に 管理者権限 または Developer Mode が必要になる場合がある
 - シンボリックリンクを削除するときに 実体ディレクトリを誤って削除しないよう注意が必要になる
 - Copilot 形式の `.agent.md` と Claude 形式の `.md` は完全に同一ではないため, GitHub Copilot cloud agent 向けに独自 frontmatter が必要な場合は 派生ファイルが必要になる
+- Claude と GitHub Copilot では prompt の標準拡張子が異なるため リンク先ごとにファイル名を変換する必要がある
 - ルートの `AGENTS.md` をシンボリックリンクにする場合 シンボリックリンクを扱えない環境やツールで追加対応が必要になる
 - 一般に `agents` ディレクトリは サブエージェント置き場として読まれやすいため, `.agents/` を大本にする構成は 初見では少し分かりにくい
 
@@ -169,6 +181,7 @@ Codex が `.agents/skills/` を公式に探索するが `.agents/` 全体を Cod
 - 運用: AI エージェント向けの AGENTS.md, skills, subagents, prompts, instructions を追加するときは 原則 `.agents/` 配下を大本として編集する
 - skills は `.agents/skills/` に配置し 対応ツールから直接利用する
 - 共通 subagent は `.agents/subagents/`, Claude 固有 subagent は `.agents/subagents/claude/`, GitHub Copilot 固有の派生ファイルは `.agents/subagents/github/` に配置する
+- 共通 prompt は `.agents/prompts/` に配置し Claude 用の `.claude/commands/` と GitHub Copilot 用の `.github/prompts/` へファイル単位でリンクする
 - その他のツール固有ディレクトリやルート `AGENTS.md` は 必要な場合だけ シンボリックリンク または 設定で `.agents/` を参照する
 
 ## 将来の考慮事項
