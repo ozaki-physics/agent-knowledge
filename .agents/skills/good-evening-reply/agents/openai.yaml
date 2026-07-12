@@ -1,4 +1,0 @@
-interface:
-  display_name: "Good Evening Reply"
-  short_description: "こんばんは とだけ言われたら こんばんは とだけ返す"
-  default_prompt: "Use $good-evening-reply when the user says こんばんは."
