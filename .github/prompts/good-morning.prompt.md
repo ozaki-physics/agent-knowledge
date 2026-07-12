@@ -1,0 +1,1 @@
+../../.agents/prompts/good-morning.md
