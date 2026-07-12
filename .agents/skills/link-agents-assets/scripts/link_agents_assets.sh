@@ -39,6 +39,9 @@ usage() {
   # Claude 用にホームディレクトリへ配置
   link_agents_assets.sh --profile claude --target ~
 
+  # GitHub Copilot 用の instructions を明示的に配置
+  link_agents_assets.sh --profile github --target /path/to/project --type instructions
+
   # 特定の skill だけ配置予定を確認
   link_agents_assets.sh --profile codex --target ~ --type skills --name link-agents-assets --dry-run
 
@@ -250,15 +253,11 @@ emit_destinations() {
 
   case "$profile:$kind" in
     repo:skills)
-      printf '%s\n' \
-        "$target/.codex/skills/$name" \
-        "$target/.github/skills/$name" \
-        "$target/.claude/skills/$name"
+      # Codex と VS Code は .agents/skills を直接探索できるため Claude Code 用だけ配置する
+      printf '%s\n' "$target/.claude/skills/$name"
       ;;
     repo:subagents)
-      printf '%s\n' \
-        "$target/.claude/agents/$file_name" \
-        "$target/.github/agents/$name.agent.md"
+      printf '%s\n' "$target/.claude/agents/$file_name"
       ;;
     repo:instructions)
       if [[ "$file_name" == "AGENTS.md" ]]; then
@@ -281,10 +280,19 @@ emit_destinations() {
       fi
       ;;
     github:skills)
-      printf '%s\n' "$target/skills/$name"
+      # .agents/skills を直接利用できない環境向けに --type skills の明示指定時だけ配置する
+      if [[ "$type_filter" == "skills" ]]; then
+        printf '%s\n' "$target/skills/$name"
+      fi
       ;;
     github:subagents)
-      printf '%s\n' "$target/agents/$name.agent.md"
+      printf '%s\n' "$target/agents/$file_name"
+      ;;
+    github:instructions)
+      # --type instructions を明示した場合だけ copilot-instructions.md を配置する
+      if [[ "$type_filter" == "instructions" && "$file_name" == "AGENTS.md" ]]; then
+        printf '%s\n' "$target/copilot-instructions.md"
+      fi
       ;;
     agents:*|custom:*)
       printf '%s\n' "$target/$kind/$file_name"
@@ -301,13 +309,69 @@ collect_kinds() {
   fi
 }
 
+# kind と profile に応じて処理対象のリンク元を出力する関数
+collect_sources() {
+  local kind="$1"
+  local source_dir="$repo_root/.agents/$kind"
+
+  if [[ "$kind" == "skills" ]]; then
+    find "$source_dir" -mindepth 1 -maxdepth 1 -type d
+    return
+  fi
+
+  if [[ "$kind" == "subagents" ]]; then
+    case "$profile" in
+      repo|claude)
+        find "$source_dir" -mindepth 1 -maxdepth 1 -type f -name '*.md'
+        if [[ -d "$source_dir/claude" ]]; then
+          find "$source_dir/claude" -mindepth 1 -maxdepth 1 -type f -name '*.md'
+        fi
+        ;;
+      github)
+        # 共通定義は GitHub Copilot が .agents から直接読むため 固有定義だけを配置する
+        if [[ -d "$source_dir/github" ]]; then
+          find "$source_dir/github" -mindepth 1 -maxdepth 1 -type f -name '*.agent.md'
+        fi
+        ;;
+      *)
+        find "$source_dir" -mindepth 1 -maxdepth 1 -type f
+        ;;
+    esac
+    return
+  fi
+
+  find "$source_dir" -mindepth 1 -maxdepth 1 -type f
+}
+
+# 配置先で同名になる subagent がないことを処理前に確認する関数
+validate_subagent_sources() {
+  local source
+  local subagent_name
+  local -A source_by_name=()
+
+  while IFS= read -r source; do
+    subagent_name="$(basename "$source")"
+    if [[ -n "${source_by_name[$subagent_name]-}" ]]; then
+      echo "subagent の名前が重複しています: $subagent_name" >&2
+      echo "  ${source_by_name[$subagent_name]}" >&2
+      echo "  $source" >&2
+      exit 2
+    fi
+    source_by_name["$subagent_name"]="$source"
+  done < <(collect_sources "subagents" | sort)
+}
+
 # シンボリックリンクを作成する関数
 # 実ファイルや実ディレクトリが既にある場合は 上書きせずにスキップする
 create_link() {
   local source="$1"
   local destination="$2"
+  local link_source
   local status
   status="$(status_of "$destination")"
+
+  # リポジトリを別の場所へ clone / move してもリンクが壊れないよう リンク先ディレクトリから見た相対パスを記録する。
+  link_source="$(realpath -m --relative-to="$(dirname "$destination")" "$source")"
 
   # 既にシンボリックリンクがある場合は --force のときだけ張り替える
   if [[ "$status" == "symlink" ]]; then
@@ -316,7 +380,7 @@ create_link() {
       return
     fi
     if [[ "$dry_run" -eq 1 ]]; then
-      echo "張り替え予定 $destination -> $source"
+      echo "張り替え予定 $destination -> $link_source"
       return
     fi
     unlink "$destination"
@@ -328,13 +392,13 @@ create_link() {
 
   # dry-run の場合は 実際には作成せず 予定だけを表示する
   if [[ "$dry_run" -eq 1 ]]; then
-    echo "作成予定 $destination -> $source"
+    echo "作成予定 $destination -> $link_source"
     return
   fi
 
   mkdir -p "$(dirname "$destination")"
-  ln -s "$source" "$destination"
-  echo "作成 $destination -> $source"
+  ln -s "$link_source" "$destination"
+  echo "作成 $destination -> $link_source"
 }
 
 # シンボリックリンクを削除する関数
@@ -363,6 +427,28 @@ remove_link() {
   echo "削除 $destination"
 }
 
+# リンク先1件に対して list, remove, link のいずれかを実行する関数
+process_destination() {
+  local kind="$1"
+  local name="$2"
+  local source="$3"
+  local destination="$4"
+  local marker
+
+  if [[ "$list_mode" -eq 1 ]]; then
+    case "$(status_of "$destination")" in
+      symlink) marker='[L]' ;;
+      exists) marker='[F]' ;;
+      none) marker='[ ]' ;;
+    esac
+    printf '%s %-12s %-28s -> %s\n' "$marker" "$kind" "$name" "$destination"
+  elif [[ "$remove_mode" -eq 1 ]]; then
+    remove_link "$destination"
+  else
+    create_link "$source" "$destination"
+  fi
+}
+
 # リンク元1件に対して 対象 profile のリンク先を処理する関数
 # list, remove, link のどの動作を行うかは フラグで切り替える
 process_item() {
@@ -377,6 +463,8 @@ process_item() {
   file_name="$(basename "$source")"
   if [[ "$kind" == "skills" ]]; then
     name="$file_name"
+  elif [[ "$profile:$kind" == "github:subagents" ]]; then
+    name="${file_name%.agent.md}"
   else
     name="${file_name%.*}"
   fi
@@ -385,24 +473,12 @@ process_item() {
   if ! name_matches "$name" "$file_name"; then
     return
   fi
-  # 少なくとも1件のリンク元が処理対象になったことを記録する
-  matched=1
-
   # profile に応じたリンク先を1件ずつ処理する
   while IFS= read -r destination; do
     [[ -n "$destination" ]] || continue
-    if [[ "$list_mode" -eq 1 ]]; then
-      case "$(status_of "$destination")" in
-        symlink) marker='[L]' ;;
-        exists) marker='[F]' ;;
-        none) marker='[ ]' ;;
-      esac
-      printf '%s %-12s %-28s -> %s\n' "$marker" "$kind" "$name" "$destination"
-    elif [[ "$remove_mode" -eq 1 ]]; then
-      remove_link "$destination"
-    else
-      create_link "$source" "$destination"
-    fi
+    # 少なくとも1件のリンク先が処理対象になったことを記録する
+    matched=1
+    process_destination "$kind" "$name" "$source" "$destination"
   done < <(emit_destinations "$kind" "$name" "$file_name")
 }
 
@@ -428,17 +504,13 @@ process_sources() {
     # ディレクトリの存在を確認して なければ スキップ
     [[ -d "$source_dir" ]] || continue
 
-    # skills はディレクトリをリンク元にする
-    if [[ "$kind" == "skills" ]]; then
-      while IFS= read -r source; do
-        process_item "$kind" "$source"
-      done < <(find "$source_dir" -mindepth 1 -maxdepth 1 -type d | sort)
-    else
-      # subagents, instructions, prompts はファイルをリンク元にする
-      while IFS= read -r source; do
-        process_item "$kind" "$source"
-      done < <(find "$source_dir" -mindepth 1 -maxdepth 1 -type f | sort)
+    if [[ "$kind" == "subagents" ]]; then
+      validate_subagent_sources
     fi
+
+    while IFS= read -r source; do
+      process_item "$kind" "$source"
+    done < <(collect_sources "$kind" | sort)
   done < <(collect_kinds)
 
   if [[ "$matched" -eq 0 ]]; then
