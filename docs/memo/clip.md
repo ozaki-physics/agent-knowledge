@@ -3,6 +3,9 @@
 #### ドキュメント: ハーネスエンジニアリング：エージェントファーストの世界における Codex の活用
 https://openai.com/ja-JP/index/harness-engineering/
 
+#### ドキュメント: Agent Skills
+https://developers.openai.com/codex/skills
+
 ## 一般
 #### ドキュメント: CLAUDE.md と AGENTS.md の二重管理、シンボリックリンクで終わらせよう
 https://zenn.dev/explaza/articles/33f1dd2003c981
