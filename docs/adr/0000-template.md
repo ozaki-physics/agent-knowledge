@@ -1,5 +1,5 @@
 # ADR {{連番}}: {{タイトル}}
-Draft / 提案中 / Review / Accepted / Rejected / 置き換え済み
+ステータス: Draft / 提案中 / Review / Accepted / Rejected / 置き換え済み
 
 ## 背景(コンテキスト)
 {{なぜ この判断が必要になったか, 背景, 前提, 制約 を書く}}

@@ -49,6 +49,34 @@ codex って 各リポジトリ の skills を参照できないのかな?
 これで リポジトリごとで使いまわしたい系 と 僕として使いまわしたい系 が 分けられる
 僕として使いまわしたい系 も git 管理できるし codex 全体に 読み込ませればいい
 リポジトリ 配下に 適宜 シンボリックリンク で追加しちゃうと リポジトリ共有したときに困る
+
+### Agent Skills の 配置場所
+Codex 用の skills は `.codex/skills/<skill-name>/SKILL.md` に配置する
+
+VS Code / GitHub Copilot in VS Code の Agent Skills は 以下の場所を標準で認識する
+- Project skills
+  - `.github/skills/`
+  - `.claude/skills/`
+  - `.agents/skills/`
+- Personal skills
+  - `~/.copilot/skills/`
+  - `~/.claude/skills/`
+  - `~/.agents/skills/`
+
+VS Code では `chat.agentSkillsLocations` で project skills の追加探索場所を設定できる
+そのため `.agents/skills/` は VS Code / GitHub Copilot in VS Code の Agent Skills 用の標準配置の一つ
+
+ただし GitHub Copilot の custom agents は `.github/agents/*.agent.md`
+Claude Code の project memory は `CLAUDE.md`
+Codex の skills は `.codex/skills/`
+それぞれ用途が違う
+
+Codex と VS Code Copilot の両方で同じ skill を使いたい場合は 以下のどちらかが候補
+- `.agents/skills/` を本体にして `.codex/skills/` からシンボリックリンクする
+- `.codex/skills/` を本体にして VS Code の `chat.agentSkillsLocations` に `.codex/skills` を追加する
+
+参考: https://code.visualstudio.com/docs/agent-customization/agent-skills#_create-a-skill
+
 ### WSL での Windows 側のマウントの場所
 `"/mnt/c/Users/Owner/My Documents/github_repository/raison-me/docs/design-docs"`
 `My Documents` で スペースがあるので ダブルクオートで囲む必要がある
@@ -131,3 +159,38 @@ usage: git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]
            [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
            [--config-env=<name>=<envvar>] <command> [<args>]
 ```
+### GitHub Copilot CLI にログインしたら 認証を どこで保持するか? になった
+__TODO: 調査__
+```
+The system vault (keychain, keyring, password manager, etc.) is not available. You may need to install one.
+Would you like to store the token in the plain text config file instead?
+
+❯ 1. Yes, I accept that risk.
+  2. No, I will login each time I use Copilot
+```
+https://docs.github.com/en/copilot/how-tos/copilot-cli/set-up-copilot-cli/troubleshoot-copilot-cli-auth#linux
+
+```
+$ secret-tool search copilot-cli
+>コマンド 'secret-tool' が見つかりません。次の方法でインストールできます:
+```
+なんかダメそう
+```
+$ sudo apt install libsecret-tools
+```
+
+とりあえず 再度 GitHub Copilot CLI でログインを試みる
+GUI で 以下と書かれたダイアログが出てきた
+```
+Choose password for new keyring
+An application wants to create a new keyring called "Default keyring". Choose the password you want to use for it.
+```
+パスワード作ったら 2回目から 聞かれなくなった
+### Codex を使うとしたら Sandbox ツールについて 警告が出た
+>⚠ Codex could not find system bubblewrap on PATH. Please install bubblewrap with your package manager. Codex will use the vendored bubblewrap in the meantime.
+>>⚠ Codex は PATH にシステム版の bubblewrap が見つかりませんでした。パッケージマネージャーを使用して bubblewrap をインストールしてください。それまでの間、Codex はベンダー提供の bubblewrap を使用します。いいえ、Copilotを使用するたびにログインします
+`sudo apt install bubblewrap` を行ってもいいが 一旦スルーしてみる
+__TODO: 調査__
+`which bwrap`
+`/usr/bin/bwrap` が出ればOK
+`bwrap --version`
